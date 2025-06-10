@@ -3,4 +3,41 @@
 
 @theme {
   --font-ibm: "IBM Plex Mono", monospace;
+
+  --animate-slide-in-right: slide-in-right 0.5s ease-in-out 1s both;
+  --animate-slide-in-left: slide-in-left 0.25s ease-in-out;
+
+  @keyframes slide-in-right {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-in-left {
+    0% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+}
+
+.htmx-indicator {
+  opacity: 0;
+}
+
+.htmx-request .htmx-indicator {
+  opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+  opacity: 1;
 }

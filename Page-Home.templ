@@ -1,22 +1,10 @@
 package main
 
-var messages = []string{
-	"Hello, my name is Nyx",
-	"Hi, Nyx, do you have any messages for me?",
-	"Yes.",
-}
-
 templ PageHome() {
 	@RootLayout("Home") {
 		<main class="bg-slate-900 text-slate-950 w-full min-h-screen gap-4 flex flex-col items-center justify-center">
-			@MessageBox(){
-				for i, message := range messages {
-					if i % 2 == 0 {
-						@NyxMessage(message)
-					} else {
-						@UserMessage(message)
-					}
-				}
+			@MessageBox() {
+				@NyxMessage("Hello, my name is Nyx")
 			}
 			@UserInput()
 		</main>
@@ -26,48 +14,65 @@ templ PageHome() {
 templ MessageBox() {
 	<section
 		id="messageBox"
-	 	class=" bg-slate-800 w-full min-h-40 max-w-md p-4 flex flex-col gap-4">
+		hx-trigger="childrenAdded"
+		hx-swap="beforeend"
+		hx-post="/response"
+		class=" bg-slate-800 w-full min-h-40 max-w-md p-4 flex flex-col gap-4 overflow-hidden"
+	>
 		{ children... }
 	</section>
 }
 
 templ NyxMessage(message string) {
 	<article
-		class="bg-slate-900 text-indigo-300 w-fit p-2 px-4 mr-8"
+		class="bg-slate-900 text-indigo-300 w-fit p-2 px-4 animate-slide-in-right ml-0 mr-auto self-start"
 	>
 		{ message }
 	</article>
 }
 
 templ UserMessage(message string) {
-	<article class="bg-slate-900 text-right w-fit text-slate-200 p-2 px-4 ml-8">
+	<article class="bg-slate-900 text-slate-200 p-2 px-4 animate-slide-in-left ml-8 mr-0 w-fit self-end">
 		{ message }
 	</article>
 }
 
 templ UserInput() {
-	<section
+	<form
 		class="flex flex-row gap-1 max-w-md w-full"
+		hx-post="/submit"
+		hx-target="#messageBox"
+		hx-swap="beforeend"
+		hx-on::after-request="this.reset(); document.querySelector('#submitButton').disabled = true;"
 	>
 		<input
 			autofocus
+			id="userInput"
+			name="userInput"
 			type="text"
 			class="bg-slate-800 text-slate-200 p-2 px-4 w-full outline-none border-none caret"
 			placeholder="Send a message..."
-		></input>
+			oninput="this.form.querySelector('button').disabled = !this.value.trim()"
+		/>
 		<button
-			class="bg-indigo-600 text-slate-200 p-2 px-4"
+			id="submitButton"
+			type="submit"
+			disabled
+			class="bg-indigo-600 text-slate-200 p-2 px-4 duration-150 transition hover:brightness-125 disabled:opacity-50 relative"
 		>
+			<div class="htmx-indicator absolute inset-0 bg-indigo-600 flex items-center justify-center">
+				@Loading("24")
+			</div>
 			@UpArrow("24")
 		</button>
-	</section>
+	</form>
 }
 
 templ UpArrow(size string) {
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
-		width={size}
-		height={size}
+		width={ size }
+		height={ size }
 		viewBox="0 0 24 24"
 		fill="none"
 		stroke="currentColor"
@@ -75,8 +80,43 @@ templ UpArrow(size string) {
 		stroke-linecap="round"
 		stroke-linejoin="round"
 		class="lucide lucide-arrow-up-icon lucide-arrow-up"
+	>
+		<path d="m5 12 7-7 7 7"></path>
+		<path d="M12 19V5"></path>
+	</svg>
+}
+
+templ Loading(size string) {
+	<svg
+		id="loading"
+		xmlns="http://www.w3.org/2000/svg"
+		width={ size }
+		height={ size }
+		viewBox="0 0 200 200"
+	>
+		<linearGradient id="a11">
+			<stop offset="0" stop-color="#FFFFFF" stop-opacity="0"></stop>
+			<stop offset="1" stop-color="#FFFFFF"></stop>
+		</linearGradient>
+		<circle
+			fill="none"
+			stroke="url(#a11)"
+			stroke-width="30"
+			stroke-linecap="round"
+			stroke-dasharray="0 44 0 44 0 44 0 44 0 360"
+			cx="100"
+			cy="100"
+			r="70"
+			transform-origin="center"
 		>
-			<path d="m5 12 7-7 7 7"/>
-			<path d="M12 19V5"/>
-		</svg>
+			<animateTransform
+				type="rotate"
+				attributeName="transform"
+				calcMode="discrete"
+				dur=".8"
+				values="360;324;288;252;216;180;144;108;72;36"
+				repeatCount="indefinite"
+			></animateTransform>
+		</circle>
+	</svg>
 }
