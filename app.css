@@ -4,8 +4,9 @@
 @theme {
   --font-ibm: "IBM Plex Mono", monospace;
 
-  --animate-slide-in-right: slide-in-right 0.5s ease-in-out 1s both;
+  --animate-slide-in-right: slide-in-right 0.5s ease-in-out both;
   --animate-slide-in-left: slide-in-left 0.25s ease-in-out;
+  --animate-fade-up: fade-up 0.25s ease-in-out both;
 
   @keyframes slide-in-right {
     0% {
@@ -25,6 +26,17 @@
     }
     100% {
       transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-up {
+    0% {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0%);
       opacity: 1;
     }
   }

@@ -1,12 +1,11 @@
 package main
 
+import "fmt"
+
 templ PageHome() {
 	@RootLayout("Home") {
 		<main class="bg-slate-900 text-slate-950 w-full min-h-screen gap-4 flex flex-col items-center justify-center">
-			@MessageBox() {
-				@NyxMessage("Hello, my name is Nyx")
-			}
-			@UserInput()
+			@MessageBox()
 		</main>
 	}
 }
@@ -14,10 +13,10 @@ templ PageHome() {
 templ MessageBox() {
 	<section
 		id="messageBox"
-		hx-trigger="childrenAdded"
+		hx-trigger="load delay:2000"
+		hx-post="/welcome"
 		hx-swap="beforeend"
-		hx-post="/response"
-		class=" bg-slate-800 w-full min-h-40 max-w-md p-4 flex flex-col gap-4 overflow-hidden"
+		class=" bg-slate-800 w-full h-80 max-w-md p-4 flex flex-col gap-4 overflow-hidden"
 	>
 		{ children... }
 	</section>
@@ -25,7 +24,19 @@ templ MessageBox() {
 
 templ NyxMessage(message string) {
 	<article
-		class="bg-slate-900 text-indigo-300 w-fit p-2 px-4 animate-slide-in-right ml-0 mr-auto self-start"
+		class="bg-slate-900 text-indigo-300 w-fit p-2 px-4 animate-slide-in-right ml-0 mr-8 self-start"
+	>
+		{ message }
+	</article>
+}
+
+templ voidMessage(message string) {
+	<article
+		hx-trigger="load delay:2000"
+		hx-post="/choice"
+		hx-swap="beforeend"
+		hx-target="#messageBox"
+		class="bg-slate-900 text-fuchsia-300 w-fit p-2 px-4 animate-slide-in-right ml-0 mr-8 self-start"
 	>
 		{ message }
 	</article>
@@ -34,6 +45,31 @@ templ NyxMessage(message string) {
 templ UserMessage(message string) {
 	<article class="bg-slate-900 text-slate-200 p-2 px-4 animate-slide-in-left ml-8 mr-0 w-fit self-end">
 		{ message }
+	</article>
+}
+
+templ YesNo(endpoint string) {
+	<article class="grid grid-cols-2 gap-2 mr-8 animate-fade-up">
+		<button
+			id="yes"
+			hx-post={ fmt.Sprintf("/%s?answer=yes", endpoint) }
+			hx-target="#messageBox"
+			hx-swap="beforeend"
+			hx-on::after-request="document.querySelector('#yes').disabled = true; document.querySelector('#no').disabled = true;"
+			class="bg-slate-900 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-900"
+		>
+			Yes
+		</button>
+		<button
+			id="no"
+			hx-post={ fmt.Sprintf("/%s?answer=no", endpoint) }
+			hx-target="#messageBox"
+			hx-swap="beforeend"
+			hx-on::after-request="document.querySelector('#yes').disabled = true; document.querySelector('#no').disabled = true;"
+			class="bg-slate-900 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-900"
+		>
+			No
+		</button>
 	</article>
 }
 
@@ -50,6 +86,8 @@ templ UserInput() {
 			id="userInput"
 			name="userInput"
 			type="text"
+			minlength="1"
+			maxlength="500"
 			class="bg-slate-800 text-slate-200 p-2 px-4 w-full outline-none border-none caret"
 			placeholder="Send a message..."
 			oninput="this.form.querySelector('button').disabled = !this.value.trim()"
