@@ -25,11 +25,15 @@ func welcomeHandler(w http.ResponseWriter, req *http.Request) {
 
 func listenHandler(w http.ResponseWriter, req *http.Request) {
 
-	answer := req.URL.Query().Get("answer")
+	err := req.ParseForm()
+    if err != nil {
+        http.Error(w, "Error reading body", http.StatusBadRequest)
+        return
+    }
 	
-	switch answer {
+	switch req.FormValue("answer") {
 	case "Yes":
-		err := UserMessage(answer).Render(req.Context(), w)
+		err := UserMessage(req.FormValue("answer")).Render(req.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering UserMessage", http.StatusInternalServerError)
 			return
@@ -48,7 +52,7 @@ func listenHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	case "No":
-		err := UserMessage(answer).Render(req.Context(), w)
+		err := UserMessage(req.FormValue("answer")).Render(req.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering UserMessage", http.StatusInternalServerError)
 			return
@@ -72,14 +76,54 @@ func offerHandler(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "Error rendering message", http.StatusInternalServerError)
 			return
 		}
+	err = UserChoice("/speak").Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering message", http.StatusInternalServerError)
+			return
+		}
 }
 
 func speakHandler(w http.ResponseWriter, req *http.Request){
-	err := UserInput().Render(req.Context(), w)
+	err := req.ParseForm()
+    if err != nil {
+        http.Error(w, "Error reading body", http.StatusBadRequest)
+        return
+    }
+
+	switch  req.FormValue("answer") {
+	case "Yes":
+		err := UserMessage(req.FormValue("answer")).Render(req.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering input", http.StatusInternalServerError)
 			return
 		}
+
+		err = UserInput().Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering input", http.StatusInternalServerError)
+			return
+		}
+
+	case "No":
+		err := UserMessage(req.FormValue("answer")).Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering input", http.StatusInternalServerError)
+			return
+		}
+
+		err = NyxMessage("Very well, goodbye.").Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering input", http.StatusInternalServerError)
+			return
+		}
+
+	default:
+		http.Error(w, "Invalid Answer!", http.StatusBadRequest)
+		return
+
+	}
+
+
 }
 
 func submitHandler(w http.ResponseWriter, req *http.Request) {
@@ -98,12 +142,25 @@ func submitHandler(w http.ResponseWriter, req *http.Request) {
 	message := html.EscapeString(req.FormValue("userInput"))
 
 	if goaway.IsProfane(message) {
-		http.Error(w, "Message is profane!", http.StatusAccepted)
-		err = NyxMessage("Message is profane!").Render(req.Context(), w)
+
+		err = UserMessage(goaway.Censor(message)).Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering UserMessage", http.StatusInternalServerError)
+			return
+    	}
+
+		err = NyxMessage("Unfortunately, this message contains profane language. I cannot add this to my messages.").Render(req.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering NyxMessage", http.StatusInternalServerError)
 			return
     	}
+
+		err = NyxMessage("Goodbye.").Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering NyxMessage", http.StatusInternalServerError)
+			return
+    	}
+
 		return
 	}
 
@@ -119,7 +176,7 @@ func submitHandler(w http.ResponseWriter, req *http.Request) {
 		return
     }
 
-    err = NyxMessage("Nice message!").Render(req.Context(), w)
+    err = NyxMessage("Thank you, I'll add it to my collection...").Render(req.Context(), w)
 	if err != nil {
 		http.Error(w, "Error rendering NyxMessage", http.StatusInternalServerError)
 		return
@@ -133,6 +190,8 @@ func saveMessage(newMessage string) error {
 	if err != nil {
         return fmt.Errorf("failed to create AWS session: %v", err.Error())
     }
+
+	defer cleanupLocalFiles()
 
 	err = downloadFile(sess)
 	if err != nil {
@@ -192,11 +251,13 @@ func readMessages() ([]string, error) {
 
 func getMessage() (string, error) {
 	sess, err := session.NewSession(&aws.Config{
-        Region: aws.String("us-east-2"), // Set your desired region
+        Region: aws.String("us-east-2"),
     })
 	if err != nil {
         return "", fmt.Errorf("failed to create AWS session: %v", err.Error())
     }
+
+	defer cleanupLocalFiles()
 
 	err = downloadFile(sess)
 	if err != nil {
@@ -232,8 +293,6 @@ func writeMessages(messages []string) error {
         }
     }
 
-	// TODO: delete messages file locally
-
     return nil
 }
 
@@ -243,5 +302,10 @@ func isDuplicate(messages []string, newMessage string) bool {
             return true
         }
     }
+
     return false
+}
+
+func cleanupLocalFiles() error {
+	return os.Remove("messages.txt")
 }

@@ -1,10 +1,8 @@
 package main
 
-import "fmt"
-
 templ PageHome() {
 	@RootLayout("Home") {
-		<main class="bg-slate-900 text-slate-950 w-full min-h-screen gap-2 flex flex-col items-center justify-center">
+		<main class="bg-slate-900 text-slate-950 w-full pt-20 min-h-screen gap-2 flex flex-col items-center justify-start">
 			@MessageBox()
 		</main>
 	}
@@ -13,23 +11,18 @@ templ PageHome() {
 templ MessageBox() {
 	<section
 		id="messageBox"
-		hx-trigger="load delay:2000"
+		hx-trigger="load"
 		hx-post="/welcome"
-		hx-target="body"
 		hx-swap="beforeend"
-		class=" bg-slate-800 w-full h-80 max-w-md p-4 flex flex-col gap-4 overflow-hidden"
+		class="bg-slate-800 w-full h-120 max-w-md p-4 flex flex-col gap-4 overflow-y-scroll overflow-x-hidden"
 	>
 		{ children... }
 	</section>
 }
 
 templ Welcome() {
-	<div hx-swap-oob="beforeend:#messageBox">
         @NyxMessage("Hello, my name is Nyx. People like to tell me messages, would you like to hear one?")
-    </div>
-    <div hx-swap-oob="afterend:#messageBox">
-        @YesNo("listen")
-    </div>
+		@UserChoice("/listen")
 }
 
 templ NyxMessage(message string) {
@@ -42,7 +35,7 @@ templ NyxMessage(message string) {
 
 templ VoidMessage(message string) {
 	<article
-		hx-trigger="load delay:2000"
+		hx-trigger="load"
 		hx-post="/offer"
 		hx-swap="beforeend"
 		hx-target="#messageBox"
@@ -57,66 +50,72 @@ templ UserMessage(message string) {
 		{ message }
 	</article>
 }
-
-// TODO: Out of band updates to render user input methods 
-
-templ YesNo(endpoint string) {
-	<article
-		hx-on::after-request="this.remove()"
-		class="grid grid-cols-2 gap-2 max-w-md w-full animate-fade-up"
-	>
-		<button
-			id="yes"
-			hx-post={ fmt.Sprintf("/%s?answer=Yes", endpoint) }
-			hx-target="#messageBox"
-			hx-swap="beforeend"
-			class="bg-slate-800 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-800"
+ 
+templ UserChoice(endpoint string) {
+	<div hx-swap-oob="afterend:#messageBox">
+		<form
+			hx-on::after-request="this.remove()"
+			class="grid grid-cols-2 gap-2 max-w-md w-full animate-fade-up"
 		>
-			Yes
-		</button>
-		<button
-			id="no"
-			hx-post={ fmt.Sprintf("/%s?answer=No", endpoint) }
-			hx-target="#messageBox"
-			hx-swap="beforeend"
-			class="bg-slate-800 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-800"
-		>
-			No
-		</button>
-	</article>
+			<button
+				id="yes"
+				name="answer"
+				value="Yes"
+				hx-post={ endpoint }
+				hx-target="#messageBox"
+				hx-swap="beforeend"
+				class="bg-slate-800 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-800"
+			>
+				Yes
+			</button>
+			<button
+				id="no"
+				name="answer"
+				value="No"
+				hx-post={ endpoint }
+				hx-target="#messageBox"
+				hx-swap="beforeend"
+				class="bg-slate-800 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-800"
+			>
+				No
+			</button>
+		</form>
+	</div>
 }
 
 templ UserInput() {
-	<form
-		class="flex flex-row gap-1 max-w-md w-full"
-		hx-post="/submit"
-		hx-target="#messageBox"
-		hx-swap="beforeend"
-		hx-on::after-request="this.remove()"
-	>
-		<input
-			autofocus
-			id="userInput"
-			name="userInput"
-			type="text"
-			minlength="1"
-			maxlength="500"
-			class="bg-slate-800 text-slate-200 p-2 px-4 w-full outline-none border-none caret"
-			placeholder="Send a message..."
-			oninput="this.form.querySelector('button').disabled = !this.value.trim()"
-		/>
-		<button
-			id="submitButton"
-			type="submit"
-			disabled
-			class="bg-indigo-600 text-slate-200 p-2 px-4 duration-150 transition hover:brightness-125 disabled:opacity-50 relative"
+	<div hx-swap-oob="afterend:#messageBox">
+		<form
+			hx-post="/submit"
+			hx-target="#messageBox"
+			hx-swap="beforeend"
+			hx-on::after-request="this.remove()"
+			class="flex flex-row gap-2 max-w-md w-full animate-fade-up"
 		>
-			<div class="htmx-indicator absolute inset-0 bg-indigo-600 flex items-center justify-center">
-				@Loading("24")
-			</div>
-			@UpArrow("24")
-		</button>
-	</form>
+			<input
+				autofocus
+				id="userInput"
+				name="userInput"
+				type="text"
+				minlength="1"
+				maxlength="500"
+				class="bg-slate-800 text-slate-200 p-2 px-4 w-full outline-none border-none caret"
+				placeholder="Send a message..."
+				oninput="this.form.querySelector('button').disabled = !this.value.trim()"
+			/>
+			<button
+				id="submitButton"
+				type="submit"
+				disabled
+				class="bg-indigo-600 text-slate-200 p-2 px-4 duration-150 transition hover:brightness-125 disabled:opacity-50 relative"
+			>
+				<div class="htmx-indicator absolute inset-0 bg-indigo-600 flex items-center justify-center">
+					@Loading("24")
+				</div>
+				@UpArrow("24")
+			</button>
+		</form>
+	</div>
 }
 
 templ UpArrow(size string) {

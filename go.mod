@@ -10,5 +10,6 @@ require (
 	github.com/blend/go-sdk v1.20240719.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
+	go.shabbyrobe.org/gibberdet v0.0.0-20230819131240-1a48c6e95e94 // indirect
 	golang.org/x/text v0.26.0 // indirect
 )
