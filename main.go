@@ -21,7 +21,7 @@ func main() {
 	http.Handle("/", templ.Handler(PageHome()))
 	http.HandleFunc("/welcome", welcomeHandler)
 	http.HandleFunc("/listen", listenHandler)
-	http.Handle("/choice", templ.Handler(YesNo("speak")))
+	http.HandleFunc("/offer", offerHandler)
 	http.HandleFunc("/speak", speakHandler)
 	http.HandleFunc("/submit", submitHandler)
 

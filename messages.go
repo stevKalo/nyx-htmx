@@ -16,16 +16,10 @@ import (
 )
 
 func welcomeHandler(w http.ResponseWriter, req *http.Request) {
-	err := NyxMessage("Hello, my name is Nyx. People like to tell me messages, would you like to hear one?").Render(req.Context(), w)
-	if err != nil {
-		http.Error(w, "Error rendering welcome message", http.StatusInternalServerError)
-		return
-    }
-
-	err = YesNo("listen").Render(req.Context(), w)
-	if err != nil {
-		http.Error(w, "Error rendering choice box", http.StatusInternalServerError)
-		return
+    err := Welcome().Render(req.Context(), w)
+    if err != nil {
+        http.Error(w, "Error rendering welcome response", http.StatusInternalServerError)
+        return
     }
 }
 
@@ -34,21 +28,33 @@ func listenHandler(w http.ResponseWriter, req *http.Request) {
 	answer := req.URL.Query().Get("answer")
 	
 	switch answer {
-	case "yes": 
+	case "Yes":
+		err := UserMessage(answer).Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering UserMessage", http.StatusInternalServerError)
+			return
+    	}
+
 		message, err := getMessage()
 		if err != nil {
 			http.Error(w, "Error getting message", http.StatusInternalServerError)
 			return
 		}
 
-		err = voidMessage(message).Render(req.Context(), w)
+		err = VoidMessage(message).Render(req.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering message", http.StatusInternalServerError)
 			return
 		}
 		return
-	case "no":
-		err := NyxMessage("Very well, goodbye.").Render(req.Context(), w)
+	case "No":
+		err := UserMessage(answer).Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering UserMessage", http.StatusInternalServerError)
+			return
+    	}
+
+		err = NyxMessage("Very well, goodbye.").Render(req.Context(), w)
 		if err != nil {
 			http.Error(w, "Error rendering message", http.StatusInternalServerError)
 			return
@@ -60,8 +66,20 @@ func listenHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func speakHandler(w http.ResponseWriter, req *http.Request){
+func offerHandler(w http.ResponseWriter, req *http.Request) {
+	err := NyxMessage("Would you like to tell me something?").Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering message", http.StatusInternalServerError)
+			return
+		}
+}
 
+func speakHandler(w http.ResponseWriter, req *http.Request){
+	err := UserInput().Render(req.Context(), w)
+		if err != nil {
+			http.Error(w, "Error rendering input", http.StatusInternalServerError)
+			return
+		}
 }
 
 func submitHandler(w http.ResponseWriter, req *http.Request) {
@@ -110,7 +128,7 @@ func submitHandler(w http.ResponseWriter, req *http.Request) {
 
 func saveMessage(newMessage string) error {
 	sess, err := session.NewSession(&aws.Config{
-        Region: aws.String("us-east-2"), // Set your desired region
+        Region: aws.String("us-east-2"),
     })
 	if err != nil {
         return fmt.Errorf("failed to create AWS session: %v", err.Error())

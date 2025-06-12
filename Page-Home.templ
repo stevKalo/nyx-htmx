@@ -4,7 +4,7 @@ import "fmt"
 
 templ PageHome() {
 	@RootLayout("Home") {
-		<main class="bg-slate-900 text-slate-950 w-full min-h-screen gap-4 flex flex-col items-center justify-center">
+		<main class="bg-slate-900 text-slate-950 w-full min-h-screen gap-2 flex flex-col items-center justify-center">
 			@MessageBox()
 		</main>
 	}
@@ -15,11 +15,21 @@ templ MessageBox() {
 		id="messageBox"
 		hx-trigger="load delay:2000"
 		hx-post="/welcome"
+		hx-target="body"
 		hx-swap="beforeend"
 		class=" bg-slate-800 w-full h-80 max-w-md p-4 flex flex-col gap-4 overflow-hidden"
 	>
 		{ children... }
 	</section>
+}
+
+templ Welcome() {
+	<div hx-swap-oob="beforeend:#messageBox">
+        @NyxMessage("Hello, my name is Nyx. People like to tell me messages, would you like to hear one?")
+    </div>
+    <div hx-swap-oob="afterend:#messageBox">
+        @YesNo("listen")
+    </div>
 }
 
 templ NyxMessage(message string) {
@@ -30,10 +40,10 @@ templ NyxMessage(message string) {
 	</article>
 }
 
-templ voidMessage(message string) {
+templ VoidMessage(message string) {
 	<article
 		hx-trigger="load delay:2000"
-		hx-post="/choice"
+		hx-post="/offer"
 		hx-swap="beforeend"
 		hx-target="#messageBox"
 		class="bg-slate-900 text-fuchsia-300 w-fit p-2 px-4 animate-slide-in-right ml-0 mr-8 self-start"
@@ -48,25 +58,28 @@ templ UserMessage(message string) {
 	</article>
 }
 
+// TODO: Out of band updates to render user input methods 
+
 templ YesNo(endpoint string) {
-	<article class="grid grid-cols-2 gap-2 mr-8 animate-fade-up">
+	<article
+		hx-on::after-request="this.remove()"
+		class="grid grid-cols-2 gap-2 max-w-md w-full animate-fade-up"
+	>
 		<button
 			id="yes"
-			hx-post={ fmt.Sprintf("/%s?answer=yes", endpoint) }
+			hx-post={ fmt.Sprintf("/%s?answer=Yes", endpoint) }
 			hx-target="#messageBox"
 			hx-swap="beforeend"
-			hx-on::after-request="document.querySelector('#yes').disabled = true; document.querySelector('#no').disabled = true;"
-			class="bg-slate-900 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-900"
+			class="bg-slate-800 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-800"
 		>
 			Yes
 		</button>
 		<button
 			id="no"
-			hx-post={ fmt.Sprintf("/%s?answer=no", endpoint) }
+			hx-post={ fmt.Sprintf("/%s?answer=No", endpoint) }
 			hx-target="#messageBox"
 			hx-swap="beforeend"
-			hx-on::after-request="document.querySelector('#yes').disabled = true; document.querySelector('#no').disabled = true;"
-			class="bg-slate-900 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-900"
+			class="bg-slate-800 text-slate-200 p-2 px-4 hover:bg-slate-200 hover:text-slate-800"
 		>
 			No
 		</button>
@@ -79,7 +92,7 @@ templ UserInput() {
 		hx-post="/submit"
 		hx-target="#messageBox"
 		hx-swap="beforeend"
-		hx-on::after-request="this.reset(); document.querySelector('#submitButton').disabled = true;"
+		hx-on::after-request="this.remove()"
 	>
 		<input
 			autofocus
