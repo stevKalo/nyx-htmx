@@ -18,7 +18,7 @@ func downloadFile(sess *session.Session) error {
 	if err != nil {
 		return fmt.Errorf("failed to create file 'messages.txt', %v", err)
 	}
-
+ 
 	defer f.Close()
 	
 	n, err := downloader.Download(f, &s3.GetObjectInput{
