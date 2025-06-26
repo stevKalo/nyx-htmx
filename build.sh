@@ -55,16 +55,16 @@ local_build() {
     
     # Generate Tailwind CSS
     log "Generating Tailwind CSS..."
-    if [ -f "app.css" ]; then
-        ./tailwindcss -i ./app.css -o ./static/css/index.css --minify
+    if [ -f "src/app.css" ]; then
+        ./tailwindcss -i ./src/app.css -o ./static/css/index.css --config ./src/tailwindcss.config.js --minify
         success "Tailwind CSS generated"
     else
-        warn "app.css not found, skipping Tailwind CSS generation"
+        warn "src/app.css not found, skipping Tailwind CSS generation"
     fi
     
     # Generate templ files
     log "Generating templ files..."
-    templ generate
+    templ generate ./src/
     success "Templ files generated"
     
     # Verify Go module
@@ -78,7 +78,7 @@ container_build() {
     log "Creating Lima instance: $LIMA_INSTANCE_NAME"
     
     # Start Lima instance with default configuration
-    limactl start --name="$LIMA_INSTANCE_NAME"
+    limactl start --name="$LIMA_INSTANCE_NAME" --vm-type=vz --rosetta
     
     # Wait for instance to be ready
     log "Waiting for Lima instance to be ready..."

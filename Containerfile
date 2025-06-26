@@ -1,18 +1,20 @@
 # Build
-FROM golang:1.24-alpine AS builder
+FROM --platform=linux/amd64 golang:1.24-alpine AS builder
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY src/ ./src/
 
-RUN go build -o main .
+COPY static/ ./static/
+
+RUN go build -o main ./src/
 
 
 # Runtime
-FROM alpine:latest
+FROM --platform=linux/amd64 alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
